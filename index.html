@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Memorice Personalizable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #fff;
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .game-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            margin: 30px auto;
+        }
+
+        .game-setup p {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .input-group input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .btn-start, .btn-reset {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            color: white;
+            font-weight: bold;
+            width: 48%;
+        }
+
+        .btn-start {
+            background-color: #28a745;
+        }
+
+        .btn-start:hover {
+            background-color: #218838;
+        }
+
+        .btn-reset {
+            background-color: #dc3545;
+        }
+
+        .btn-reset:hover {
+            background-color: #c82333;
+        }
+
+        #gameBoard {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            max-width: 600px; /* Ajusta este valor si necesitas un tablero más ancho para más cartas */
+            margin: 0 auto;
+        }
+
+        .card {
+            width: 100%;
+            padding-top: 100%;
+            position: relative;
+            background-color: #ccc;
+            border: 2px solid #aaa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card .front-face, .card .back-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .card .front-face {
+            background-color: #6a11cb;
+            border: 2px solid #5a0ebf;
+            font-size: 3em;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            z-index: 2;
+            transform: rotateY(0deg);
+        }
+        .card .front-face:before {
+            content: "❓";
+        }
+
+
+        .card .back-face {
+            transform: rotateY(180deg);
+            background-color: #fff;
+            border: 2px solid #ddd;
+            z-index: 1;
+        }
+
+        .card .back-face img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .card.matched {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        #scoreDisplay {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            background-color: #f9f9f9;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #scoreDisplay span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #gameOverScreen {
+            display: none;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 20px;
+            width: 90%;
+            max-width: 450px;
+            color: #333;
+        }
+        #gameOverScreen h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        #gameOverScreen p {
+            color: #555;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        #gameOverScreen .buttons {
+            margin-top: 20px;
+        }
+
+        /* --- Media Queries para Responsividad --- */
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+
+            .game-container {
+                padding: 20px;
+                margin: 20px auto;
+            }
+
+            .game-setup p {
+                font-size: 0.95em;
+            }
+
+            .input-group label {
+                font-size: 0.9em;
+            }
+
+            .input-group input[type="number"] {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            .buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-start, .btn-reset {
+                width: 100%;
+                font-size: 1em;
+                padding: 10px 20px;
+            }
+
+            #gameBoard {
+                padding: 10px;
+                gap: 5px;
+            }
+
+            .card .front-face:before {
+                font-size: 2em;
+            }
+
+            #scoreDisplay {
+                font-size: 1em;
+                padding: 8px 15px;
+            }
+
+            #gameOverScreen {
+                padding: 20px;
+                font-size: 0.95em;
+            }
+            #gameOverScreen h2 {
+                font-size: 1.5em;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 900px) {
+            h1 {
+                font-size: 2.2em;
+            }
+
+            .game-container {
+                max-width: 600px;
+                padding: 25px;
+            }
+            
+            .buttons {
+                flex-direction: row;
+                gap: 15px;
+            }
+
+            .btn-start, .btn-reset {
+                width: 48%;
+            }
+
+            #gameBoard {
+                max-width: 550px;
+            }
+        }
+
+        /* Media Query específica para tableros más grandes */
+        @media (min-width: 601px) {
+            /* Permitir que el tablero se expanda un poco más si es necesario para más columnas */
+            #gameBoard {
+                max-width: 800px; /* Incrementa el ancho máximo para acomodar más columnas */
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Juego de Memorice Personalizable</h1>
+
+    <div class="game-container">
+        <div id="setupScreen" class="game-setup">
+            <p>Define cuántos pares deseas jugar de las imágenes disponibles (2-20):</p>
+
+            <div class="input-group">
+                <label for="numPairs">Número de pares:</label>
+                <input type="number" id="numPairs" value="6" min="2" max="20"> </div>
+            
+            <div class="buttons">
+                <button id="startGameBtn" class="btn-start">Iniciar Juego</button>
+                <button id="resetGameBtn" class="btn-reset">Reiniciar</button>
+            </div>
+        </div>
+
+        <div id="gameBoard">
+            </div>
+
+        <div id="scoreDisplay" style="display: none;">
+            </div>
+
+        <div id="gameOverScreen">
+            <h2>¡Juego Terminado!</h2>
+            <p id="finalStats"></p>
+            <div class="buttons">
+                <button id="playAgainSameImagesBtn" class="btn-start">Jugar de nuevo</button>
+                <button id="chooseNewImagesBtn" class="btn-reset">Elegir nuevas imágenes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const setupScreen = document.getElementById('setupScreen');
+            const gameBoard = document.getElementById('gameBoard');
+            const numPairsInput = document.getElementById('numPairs');
+
+            const startGameBtn = document.getElementById('startGameBtn');
+            const resetGameBtn = document.getElementById('resetGameBtn');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            
+            const gameOverScreen = document.getElementById('gameOverScreen');
+            const finalStatsDisplay = document.getElementById('finalStats');
+            const playAgainSameImagesBtn = document.getElementById('playAgainSameImagesBtn');
+            const chooseNewImagesBtn = document.getElementById('chooseNewImagesBtn');
+
+            // --- URL FIJA DEL ARCHIVO DE IMÁGENES ---
+            const IMAGES_TXT_URL = 'https://raw.githubusercontent.com/vjosvaldolara/JuegoMemoria/refs/heads/main/Fotos.txt';
+
+            let allAvailableImageLinks = []; 
+            let cards = []; 
+            let firstCard = null;
+            let secondCard = null;
+            let lockBoard = false;
+            let matchedPairs = 0;
+            let totalAttempts = 0;
+            let currentNumPairs = 0; 
+            const TIEMPO_ESPERA_VOLTEO = 1000;
+
+            // --- Rutas de Archivos de Sonido ---
+            const SOUND_FLIP = 'sounds/flip.mp3'; 
+            const SOUND_MATCH = 'sounds/match.mp3';
+            const SOUND_MISMATCH = 'sounds/mismatch.mp3';
+            const SOUND_WIN = 'sounds/win.mp3';
+
+            function playSound(src) {
+                const audio = new Audio(src);
+                audio.play().catch(e => console.error("Error al reproducir sonido:", e));
+            }
+
+            // --- Cargar las imágenes al inicio de la página ---
+            async function loadImagesFromUrl() {
+                try {
+                    const response = await fetch(IMAGES_TXT_URL);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status} al cargar ${IMAGES_TXT_URL}`);
+                    }
+                    const text = await response.text();
+                    allAvailableImageLinks = text.split('\n')
+                                     .map(line => line.trim())
+                                     .filter(line => line.length > 0 && (line.startsWith('http://') || line.startsWith('https://')));
+                    
+                    if (allAvailableImageLinks.length < 2) {
+                        alert('El archivo de imágenes no contiene suficientes URLs de imágenes válidas (se necesitan al menos 2). Por favor, revisa el archivo Fotos.txt.');
+                        startGameBtn.disabled = true;
+                        numPairsInput.disabled = true;
+                        console.error('No hay suficientes imágenes disponibles para jugar.');
+                    } else {
+                        // Asegura que el valor predeterminado y el máximo del input de pares no excedan el total disponible o 20
+                        const maxAllowedPairs = Math.min(20, allAvailableImageLinks.length); // Límite máximo de 20 o las disponibles
+                        numPairsInput.max = maxAllowedPairs;
+                        if (parseInt(numPairsInput.value) > maxAllowedPairs) {
+                            numPairsInput.value = maxAllowedPairs;
+                        }
+                        console.log(`Cargadas ${allAvailableImageLinks.length} imágenes disponibles del archivo TXT. Máximo ${maxAllowedPairs} pares.`);
+                    }
+
+                } catch (error) {
+                    console.error('Error fatal al cargar las imágenes:', error);
+                    alert(`No se pudieron cargar las imágenes desde la URL fija (${IMAGES_TXT_URL}). El juego no puede iniciar. Error: ${error.message}`);
+                    startGameBtn.disabled = true;
+                    numPairsInput.disabled = true;
+                }
+            }
+
+            loadImagesFromUrl();
+
+
+            // --- Event Listeners ---
+            resetGameBtn.addEventListener('click', () => {
+                location.reload();
+            });
+
+            playAgainSameImagesBtn.addEventListener('click', () => {
+                gameOverScreen.style.display = 'none';
+                gameBoard.style.display = 'grid';
+                scoreDisplay.style.display = 'block';
+                initializeGame(currentNumPairs); 
+            });
+
+            chooseNewImagesBtn.addEventListener('click', () => {
+                location.reload();
+            });
+
+            startGameBtn.addEventListener('click', () => {
+                const requestedNumPairs = parseInt(numPairsInput.value);
+
+                if (isNaN(requestedNumPairs) || requestedNumPairs < 2 || requestedNumPairs > 20 || requestedNumPairs > allAvailableImageLinks.length) {
+                    alert(`El número de pares debe ser entre 2 y ${Math.min(20, allAvailableImageLinks.length)}.`);
+                    return;
+                }
+                
+                currentNumPairs = requestedNumPairs; 
+                
+                setupScreen.style.display = 'none';
+                gameBoard.style.display = 'grid';
+                scoreDisplay.style.display = 'block';
+                gameOverScreen.style.display = 'none'; 
+                
+                console.log(`Iniciando juego con ${currentNumPairs} pares.`);
+                initializeGame(currentNumPairs);
+            });
+
+            // --- Funciones del Juego ---
+
+            function initializeGame(numPairs) {
+                gameBoard.innerHTML = '';
+                matchedPairs = 0;
+                totalAttempts = 0;
+                cards = [];
+                firstCard = null;
+                secondCard = null;
+                lockBoard = false;
+                updateScore(false, numPairs);
+
+                const selectedImagesForGame = [];
+                const shuffledAvailableLinks = [...allAvailableImageLinks].sort(() => 0.5 - Math.random()); 
+                for (let i = 0; i < numPairs; i++) {
+                    selectedImagesForGame.push(shuffledAvailableLinks[i]);
+                }
+                console.log('Imágenes seleccionadas para este juego:', selectedImagesForGame);
+
+                const cardsData = [...selectedImagesForGame, ...selectedImagesForGame] 
+                    .sort(() => 0.5 - Math.random());
+
+                let totalCards = cardsData.length;
+                let columns;
+
+                // Lógica mejorada para determinar el número de columnas
+                // Intenta una distribución cuadrada o casi cuadrada primero
+                // Luego, prioriza números de columnas comunes para tableros grandes
+                if (totalCards <= 4) { // 4 cartas (2x2)
+                    columns = 2;
+                } else if (totalCards <= 8) { // 6 (2x3), 8 (2x4 o 4x2)
+                    columns = totalCards / 2; // Intenta una fila de 2 cartas
+                    if (columns > 4) columns = 4; // Max 4 columnas para 8 cartas
+                } else if (totalCards <= 12) { // 10 (2x5), 12 (3x4 o 4x3)
+                    columns = 4; // Buen balance para 12
+                } else if (totalCards <= 20) { // 14 (2x7), 16 (4x4), 18 (3x6), 20 (4x5)
+                    columns = 5; // Un buen balance para tableros medianos-grandes
+                    if (totalCards % columns !== 0) { // Si no es divisible por 5, prueba otras opciones
+                        if (totalCards % 4 === 0 && totalCards >= 16) columns = 4; // Para 16 (4x4)
+                        else if (totalCards % 6 === 0 && totalCards >= 18) columns = 6; // Para 18 (3x6)
+                    }
+                } else { // Para cualquier otro número, usa la raíz cuadrada
+                    columns = Math.ceil(Math.sqrt(totalCards));
+                }
+
+                // Ajuste adicional para evitar columnas excesivas en móviles
+                if (window.innerWidth < 600 && columns > 4) {
+                    columns = 4; // Limita a 4 columnas en pantallas pequeñas para no hacer las cartas minúsculas
+                } else if (window.innerWidth < 900 && columns > 6) {
+                    columns = 6; // Limita a 6 columnas en pantallas medianas
+                }
+                
+                gameBoard.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+                console.log(`Tablero configurado con ${columns} columnas y ${totalCards} tarjetas.`);
+
+                cardsData.forEach((imgSrc, index) => {
+                    const cardElement = document.createElement('div');
+                    cardElement.classList.add('card');
+                    cardElement.dataset.imgSrc = imgSrc;
+                    cardElement.dataset.cardId = `card-${index}`;
+
+                    cardElement.innerHTML = `
+                        <div class="front-face"></div>
+                        <div class="back-face">
+                            <img src="${imgSrc}" alt="Imagen de memorice">
+                        </div>
+                    `;
+                    cardElement.addEventListener('click', flipCard);
+                    gameBoard.appendChild(cardElement);
+                    cards.push(cardElement);
+                });
+
+                console.log(`Tablero creado con ${cards.length} tarjetas.`);
+            }
+
+            function flipCard() {
+                if (lockBoard) {
+                    return;
+                }
+                if (this === firstCard || this.classList.contains('flipped') || this.classList.contains('matched')) {
+                     return;
+                }
+
+                this.classList.add('flipped');
+                playSound(SOUND_FLIP);
+                console.log(`Tarjeta volteada: ${this.dataset.cardId} (URL acortada: ${this.dataset.imgSrc.substring(0, 50)}...)`);
+
+                if (!firstCard) {
+                    firstCard = this;
+                    return;
+                }
+
+                secondCard = this;
+                totalAttempts++;
+                updateScore(false, currentNumPairs); 
+                checkForMatch();
+            }
+
+            function checkForMatch() {
+                let isMatch = firstCard.dataset.imgSrc === secondCard.dataset.imgSrc;
+
+                if (isMatch) {
+                    console.log('¡PAR ENCONTRADO! 🎉');
+                    playSound(SOUND_MATCH);
+                    disableCards();
+                } else {
+                    console.log('No es un par. Volteando tarjetas de nuevo...');
+                    playSound(SOUND_MISMATCH);
+                    unflipCards();
+                }
+            }
+
+            function disableCards() {
+                firstCard.removeEventListener('click', flipCard);
+                secondCard.removeEventListener('click', flipCard);
+                
+                firstCard.classList.add('matched'); 
+                secondCard.classList.add('matched');
+                
+                matchedPairs++;
+
+                if (matchedPairs === currentNumPairs) {
+                    setTimeout(() => {
+                        console.log('¡JUEGO COMPLETADO!');
+                        playSound(SOUND_WIN);
+                        
+                        const scorePercentage = (totalAttempts > 0) ? ((currentNumPairs / totalAttempts) * 100).toFixed(2) : 'N/A';
+                        
+                        gameOverScreen.style.display = 'block';
+                        gameBoard.style.display = 'none';
+                        scoreDisplay.style.display = 'none';
+                        finalStatsDisplay.innerHTML = `
+                            Has encontrado todos los pares en ${totalAttempts} intentos.<br>
+                            Aciertos: ${matchedPairs} de ${currentNumPairs}<br>
+                            Efectividad: ${scorePercentage}%
+                        `;
+                    }, 500);
+                }
+
+                resetBoard();
+            }
+
+            function unflipCards() {
+                lockBoard = true;
+
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    console.log('Tarjetas volteadas de nuevo.');
+                    resetBoard();
+                }, TIEMPO_ESPERA_VOLTEO);
+            }
+
+            function resetBoard() {
+                [firstCard, secondCard, lockBoard] = [null, null, false];
+                console.log('Tablero reseteado para el siguiente turno.');
+            }
+
+            function updateScore(isFinal = false, totalGamePairs = 0) {
+                scoreDisplay.innerHTML = `Intentos: ${totalAttempts} | Aciertos: ${matchedPairs} de ${totalGamePairs}`;
+            }
+        });
+    </script>
+</body>
+</html>
